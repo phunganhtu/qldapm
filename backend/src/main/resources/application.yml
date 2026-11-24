@@ -1,0 +1,81 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: dienmay-backend
+  profiles:
+    # Mặc định dùng PostgreSQL. Chạy nhanh không cần cài DB: --spring.profiles.active=h2
+    default: postgres
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        default_schema: dien_may
+        format_sql: true
+  jackson:
+    default-property-inclusion: non_null
+
+app:
+  jwt:
+    # Khóa HMAC (Base64, >= 32 byte). Chỉ dùng cho môi trường demo; khi triển khai
+    # phải đặt biến môi trường JWT_SECRET.
+    secret: ${JWT_SECRET:ZGllbm1heS1kZW1vLWp3dC1zZWNyZXQta2V5LWNoYW5nZS1tZS0yMDI2IQ==}
+    expiration-minutes: ${JWT_EXPIRATION_MINUTES:480}
+  rate-limit:
+    enabled: ${RATE_LIMIT_ENABLED:true}
+    # Đăng nhập: giới hạn theo IP để chống dò mật khẩu.
+    login:
+      capacity: ${RATE_LIMIT_LOGIN_CAPACITY:5}
+      period: ${RATE_LIMIT_LOGIN_PERIOD:1m}
+    # Các API còn lại: theo tài khoản nếu đã đăng nhập, theo IP nếu chưa.
+    api:
+      capacity: ${RATE_LIMIT_API_CAPACITY:100}
+      period: ${RATE_LIMIT_API_PERIOD:1m}
+  seed:
+    # Tạo dữ liệu mẫu (tài khoản, hãng, danh mục, sản phẩm...) khi bảng còn trống.
+    enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+
+---
+spring:
+  config:
+    activate:
+      on-profile: postgres
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/dien_may}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/schema-postgres.sql
+      continue-on-error: false
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+---
+spring:
+  config:
+    activate:
+      on-profile: h2
+  datasource:
+    url: jdbc:h2:mem:dienmay;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;INIT=CREATE SCHEMA IF NOT EXISTS dien_may
+    username: sa
+    password:
+  sql:
+    init:
+      mode: never
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
