@@ -1,0 +1,5 @@
+# Script shell phải giữ LF để chạy được trên Linux (server deploy, Docker, CI).
+mvnw text eol=lf
+*.sh text eol=lf
+# Script Windows giữ CRLF.
+*.cmd text eol=crlf
